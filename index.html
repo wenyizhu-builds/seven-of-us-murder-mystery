@@ -58,6 +58,8 @@ blockquote{margin:0;padding:26px 26px;background:var(--ink);color:var(--cream);b
 .opts{display:grid;gap:8px}
 .opt{display:flex;gap:12px;align-items:center;text-align:left;background:#fff8ef;border:1.5px solid #e4d3c0;border-radius:3px;padding:11px 14px;font:500 16px Jost,sans-serif;color:var(--ink);cursor:pointer}
 .opt:hover,.opt:focus-visible{border-color:var(--red);outline:none}
+.opt.picked{border-color:var(--ink);background:#f1e4d2}
+.qback{margin-top:14px;min-height:44px;padding:0 4px;border:0;background:transparent;font:600 15px Jost,sans-serif;color:var(--ink);text-decoration:underline;cursor:pointer}
 .prog{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#8b5a44;margin-bottom:8px}
 .result{text-align:center}
 .result svg{width:120px;height:120px}
@@ -447,15 +449,17 @@ const Q=[
  {q:'What would your friends call you?',w:2,a:['The homebody','The bookworm','The neat freak','The competitive one','The foodie','The sporty one','The scaredy-cat']}
 ];
 const qp=document.getElementById('qpanel');
-let qi=0,score={};
+let qi=0,score={},ans=[],orders=[],tie={};
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function startQuiz(){qi=0;score={};D.forEach(d=>score[d.k]=Math.random()*0.1);showQ()}
+function startQuiz(){qi=0;ans=[];orders=Q.map(()=>shuffle([0,1,2,3,4,5,6]));tie={};D.forEach(d=>tie[d.k]=Math.random()*0.1);showQ()}
 function showQ(){
- const q=Q[qi];const order=shuffle([0,1,2,3,4,5,6]);
- qp.innerHTML=`<div class="q"><div class="prog">Question ${qi+1} of 3</div><h3>${q.q}</h3><div class="opts">${order.map(i=>`<button class="opt" data-i="${i}">${q.a[i]}</button>`).join('')}</div></div>`;
- qp.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{score[D[+b.dataset.i].k]+=q.w;qi++;qi<Q.length?showQ():finish()});
+ const q=Q[qi];
+ qp.innerHTML=`<div class="q"><div class="prog">Question ${qi+1} of 3</div><h3>${q.q}</h3><div class="opts">${orders[qi].map(i=>`<button class="opt${ans[qi]===i?' picked':''}" data-i="${i}">${q.a[i]}</button>`).join('')}</div>${qi>0?'<button class="qback" id="qback">← Back to question '+qi+'</button>':''}</div>`;
+ qp.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ans[qi]=+b.dataset.i;qi++;qi<Q.length?showQ():finish()});
+ const bk=document.getElementById('qback');if(bk)bk.onclick=()=>{qi--;showQ()};
 }
 function finish(){
+ score={...tie};Q.forEach((q,i)=>{score[D[ans[i]].k]+=q.w});
  const rank=D.map(d=>d.k).sort((a,b)=>score[b]-score[a]);
  store.code=rank.join('');save();showResult();
 }
