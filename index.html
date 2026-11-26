@@ -98,6 +98,8 @@ section.act{scroll-margin-top:52px}
 .part+.part.locked{border-top:1.5px dashed #9c968e;margin-top:24px}
 .lockt{margin:0 0 12px;color:#4a4540}
 .unlock{display:flex;gap:8px}.unlock input{flex:1;min-height:48px}.unlock .btn{min-height:48px}
+.quizhint{margin:10px 0 0;font-size:15px}.quizhint a{color:var(--red);font-weight:600}
+.part{scroll-margin-top:60px}
 .err{color:#b02e1c;font-size:14px;min-height:0;margin:6px 0 0}
 h3.sub{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:#6a645d;margin:0 0 8px;font-weight:600}
 .dlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
@@ -480,7 +482,7 @@ function partHTML(p){
  const h=`<div class="phead">${showLabel?`<span class="plabel">${label}</span>`:''}<span class="psub">${sub}</span></div>`;
  if(!open) return `<div class="part locked">${h}<p class="lockt">🔒 Opens when your host reads out the word.</p><form class="unlock" data-p="${p}"><input placeholder="Word from your host" aria-label="Word for ${showLabel?'Act 3 '+label:label}" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="go"><button class="btn">Unlock</button></form><p class="err" role="status"></p></div>`;
  const rows=ORDER(p).map(d=>`<button class="drow" data-p="${p}" data-k="${d.k}"><i style="background:${d.col}"></i><span><b>${dlabel(d,p)}</b><small>${d.name}</small></span>${d.k===mine()?'<em>Yours</em>':''}<span class="chev">›</span></button>`).join('');
- return `<div class="part">${h}<h3 class="sub">The seven diaries</h3><div class="dlist">${rows}</div>
+ return `<div class="part">${h}<h3 class="sub">The seven diaries</h3><div class="dlist">${rows}</div>${!mine()&&p===0?'<p class="quizhint">Not sure which diary is yours? <a href="#quiz">Take the 3-question quiz</a></p>':''}
   <details class="evd"><summary><span>Evidence</span><small>${CNT[p]} items</small></summary><div class="evs">${EV[p]}</div></details></div>`;
 }
 function renderActs(){
@@ -516,7 +518,13 @@ function openDiary(p,k,push=true){
 function closeAll(){['reader','zoom'].forEach(id=>document.getElementById(id).classList.add('hidden'));document.body.style.overflow=''}
 window.addEventListener('popstate',closeAll);
 function zoom(s){const Z=document.getElementById('zoom');Z.innerHTML=`<button aria-label="Close">✕ Close</button><div class="zin">${s.outerHTML}</div>`;Z.classList.remove('hidden');document.body.style.overflow='hidden';history.pushState({z:1},'');Z.querySelector('button').onclick=()=>history.back()}
-renderActs();
+const OPENH={'open-act1':0,'open-act2':1,'open-act3-part1':2,'open-act3-part2':3};
+function scanOpen(){const h=location.hash.slice(1);if(!(h in OPENH))return;const p=OPENH[h];
+ for(let i=0;i<=p;i++)if(!store.open.includes(i))store.open.push(i);save();renderActs();
+ const sec='act'+PARTS[p][1];history.replaceState(null,'','#'+sec);
+ const go=()=>{const el=p===3?document.querySelectorAll('#parts3 .part')[1]:document.getElementById(sec);if(el){document.documentElement.style.scrollBehavior='auto';window.scrollTo(0,el.getBoundingClientRect().top+scrollY-60);document.documentElement.style.scrollBehavior=''}};go();setTimeout(go,350);}
+window.addEventListener('hashchange',scanOpen);
+renderActs();scanOpen();
 
 </script>
 </body>
